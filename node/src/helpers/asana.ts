@@ -1,10 +1,9 @@
-import a = require('axios');
-import dotenv = require('dotenv');
-import { resolve } from 'path';
+import axios from "axios";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const axios = a.default;
+// const axios = a.default;
 
 interface TaskId {
   gid: string,
@@ -42,15 +41,3 @@ export const fetchTodo = async (): Promise<Task[]> => {
       .then((res) => res.data.data)
   )));
 };
-
-export const formatToDoList = (todo: Task[]) => {
-  let message = '*Here is a quick "_ToDo List_" to talk about today:*\n\n';
-
-  todo.forEach((task: Task) => {
-    message += '\t• '
-    if (task.assignee) message += `_(${task.assignee.name.split(' ')[0]})_ - `;
-    message += `${task.name}\n`;
-  });
-
-  return message
-}

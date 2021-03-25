@@ -1,8 +1,9 @@
-import express = require('express');
+import express from "express";
 
-import asana = require('./helpers/asana');
-import slack = require('./helpers/slack');
-import dotenv = require('dotenv');
+import * as asana from "./helpers/asana";
+import { sendMessage } from "./helpers/slack";
+import { formatToDoList } from "./helpers/messages"
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ app.get('/api/todoList', (req, res) =>
     .catch(() => res.sendStatus(500)));
 
 app.post('/api/sendMessage', (req, res) =>
-  slack.sendMessage(req.body.message, 'SLACK_TESTING')
+  sendMessage(req.body.message, 'SLACK_TESTING')
     .then((s) => {
       console.log(s.request._header);
       res.sendStatus(200);
@@ -25,7 +26,7 @@ app.post('/api/sendMessage', (req, res) =>
 
 app.get('/api/sendToDoList', (req, res) =>
     asana.fetchTodo()
-      .then((data) => slack.sendMessage(asana.formatToDoList(data), 'SLACK_TESTING'))
+      .then((data) => sendMessage(formatToDoList(data), 'SLACK_TESTING'))
       .then(() => res.sendStatus(200))
       .catch((e) => res.status(500).send(e.message)));
 
