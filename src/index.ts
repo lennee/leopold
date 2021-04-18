@@ -27,7 +27,7 @@ app.post('/api/sendMessage', (req, res) =>
 app.get('/api/sendToDoList', (req, res) =>
     asana.fetchTodo()
       .then((data) => sendMessage(formatToDoList(data), 'SLACK_TESTING'))
-      .then(() => res.status(200).send("Hello!"))
+      .then(() => res.sendStatus(200))
       .catch((e) => res.status(500).send(e.message)));
 
 
