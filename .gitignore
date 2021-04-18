@@ -129,6 +129,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-*/data
-*/creds
-*/node_modules
+node_modules/
