@@ -5,8 +5,6 @@ import leopold from "./routers/leopold";
 import slack from "./routers/slack";
 import dotenv from "dotenv";
 
-import { listEvents } from './services/google_calendar'
-
 dotenv.config();
 
 const app = express();

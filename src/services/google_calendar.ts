@@ -1,25 +1,26 @@
-import fs from 'fs';
-import { execute, Creds, CREDENTIALS_PATH  } from './google_authorization'
-import { google } from 'googleapis'
+import { getAuthClient  } from './google_authorization'
+import { calendar_v3, google } from 'googleapis'
+import { OAuth2Client } from 'google-auth-library'
+import Schema$Event = calendar_v3.Schema$Event
 
 
-const _listEvents = (auth: any) =>
-  new Promise((resolve, reject) => {
-    const calendar = google.calendar({version: 'v3', auth});
+
+export const listEvents = async (calendarId: string): Promise<Schema$Event[]> => {
+
+  const auth: OAuth2Client = await getAuthClient()
+
+  const calendar = google.calendar({version: 'v3', auth});
+
+  return new Promise((resolve, reject) => {
     calendar.events.list({
-      calendarId: 'calendarId',
+      calendarId,
       timeMin: (new Date()).toISOString(),
       maxResults: 10,
       singleEvents: true,
       orderBy: 'startTime',
     }, (err, data) => {
       if (err) reject(err)
-      resolve(data.data)
+      resolve(data.data.items)
     })
   })
-
-export const listEvents = () => {
-    const data = fs.readFileSync(CREDENTIALS_PATH)
-    const creds: Creds = JSON.parse(data.toString())
-    return execute(creds, _listEvents)
-  }
+}
