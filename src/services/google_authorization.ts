@@ -6,9 +6,16 @@ import { OAuth2Client, Credentials } from 'google-auth-library'
 import { exists, question } from './helpers'
 
 export const CREDENTIALS_PATH = './src/credentials/credentials.json'
-export const TOKEN_PATH = './src/credentials/token.json'
+export const tokenPath = (scopeName: Scopes) => `./src/credentials/token_${scopeName}.json`
 
-export const SCOPES = {
+export enum Scopes {
+  READ_CALENDAR = 'read_cal',
+  READ_MAIL = 'read_mail',
+  FULL_CALENDAR = 'full_cal',
+  FULL_MAIL = 'full_mail'
+}
+
+const SCOPES_MAP = {
   read_cal: ['https://www.googleapis.com/auth/calendar.readonly'],
   full_cal: ['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/calendar.events'],
   read_mail: ['https://www.googleapis.com/auth/gmail.readonly'],
@@ -27,7 +34,7 @@ export interface Creds {
   }
 }
 
-export const getOAuthClient = async (): Promise<OAuth2Client> => {
+export const getOAuthClient = async (scopeName: Scopes): Promise<OAuth2Client> => {
   // Create OAPI Client
   const credentials = _loadAuthCreds();
   const {client_secret, client_id, redirect_uris} = credentials.installed;
@@ -36,26 +43,26 @@ export const getOAuthClient = async (): Promise<OAuth2Client> => {
 
   // Load tokens (either from file or create them)
   let token: Credentials
-  if (!exists(TOKEN_PATH)) {
-    token = await _createToken(oAuth2Client)
+  if (!exists(tokenPath(scopeName))) {
+    token = await _createToken(oAuth2Client, scopeName)
   } else {
-    token = _loadToken()
+    token = _loadToken(scopeName)
   }
   await oAuth2Client.setCredentials(token)
 
   return oAuth2Client
 }
 
-const _createToken = async (oAuth2Client: OAuth2Client) => new Promise(async (resolve, reject) => {
+const _createToken = async (oAuth2Client: OAuth2Client, scopeName: Scopes) => new Promise(async (resolve, reject) => {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
-    scope: SCOPES.read_cal,
+    scope: SCOPES_MAP[scopeName]
   });
   console.log('Authorize this app by visiting this url:', authUrl);
   const code: string = await question('Please input the token to this line: ');
   oAuth2Client.getToken(code)
     .then((res) => {
-      fs.writeFileSync(TOKEN_PATH, JSON.stringify(res.tokens))
+      fs.writeFileSync(tokenPath(scopeName), JSON.stringify(res.tokens))
       resolve(res.tokens)
     })
     .catch((err) => reject)
@@ -69,4 +76,5 @@ const _loadAuthCreds = (): Creds => {
   }
 }
 
-const _loadToken = (): Credentials => JSON.parse(fs.readFileSync(TOKEN_PATH).toString())
+// Reads token from file name (according to needed token scope)
+const _loadToken = (scopeName: Scopes): Credentials => JSON.parse(fs.readFileSync(tokenPath(scopeName)).toString())
