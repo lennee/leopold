@@ -1,15 +1,20 @@
 import fs from 'fs'
 import readline from 'readline'
+import axios from 'axios'
 import { google } from 'googleapis'
 import { OAuth2Client, Credentials } from 'google-auth-library'
-import { exists } from './helpers'
+import { exists, question } from './helpers'
 
 export const CREDENTIALS_PATH = './src/credentials/credentials.json'
 export const TOKEN_PATH = './src/credentials/token.json'
 
 export const SCOPES = {
-  'read_cal': ['https://www.googleapis.com/auth/calendar.readonly'],
+  read_cal: ['https://www.googleapis.com/auth/calendar.readonly'],
+  full_cal: ['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/calendar.events'],
+  read_mail: ['https://www.googleapis.com/auth/gmail.readonly'],
+  full_mail: ['https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/gmail.labels','https://www.googleapis.com/auth/gmail.readonly' ],
 }
+
 export interface Creds {
   installed: {
     auth_uri: string,
@@ -22,51 +27,46 @@ export interface Creds {
   }
 }
 
-function getAccessToken(oAuth2Client: OAuth2Client) {
+export const getOAuthClient = async (): Promise<OAuth2Client> => {
+  // Create OAPI Client
+  const credentials = _loadAuthCreds();
+  const {client_secret, client_id, redirect_uris} = credentials.installed;
+  const oAuth2Client = new google.auth.OAuth2(
+      client_id, client_secret, redirect_uris[0]);
+
+  // Load tokens (either from file or create them)
+  let token: Credentials
+  if (!exists(TOKEN_PATH)) {
+    token = await _createToken(oAuth2Client)
+  } else {
+    token = _loadToken()
+  }
+  await oAuth2Client.setCredentials(token)
+
+  return oAuth2Client
+}
+
+const _createToken = async (oAuth2Client: OAuth2Client) => new Promise(async (resolve, reject) => {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES.read_cal,
   });
   console.log('Authorize this app by visiting this url:', authUrl);
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  rl.question('Enter the code from that page here: ', (code) => {
-    rl.close();
-    oAuth2Client.getToken(code, (err: Error, token: Credentials) => {
-      if (err) return console.error('Error retrieving access token', err);
-      oAuth2Client.setCredentials(token);
-      // Store the token to disk for later program executions
-      fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err2) => {
-        if (err) return console.error(err2);
-        console.log('Token stored to', TOKEN_PATH);
-      });
-    });
-  });
-}
+  const code: string = await question('Please input the token to this line: ');
+  oAuth2Client.getToken(code)
+    .then((res) => {
+      fs.writeFileSync(TOKEN_PATH, JSON.stringify(res.tokens))
+      resolve(res.tokens)
+    })
+    .catch((err) => reject)
+  })
 
-export const getAuthClient = async (): Promise<OAuth2Client>  => {
-  // Load Credentials from file (throw error if creds don't exist)
-  let credentials: Creds
+const _loadAuthCreds = (): Creds => {
   try {
-    credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH).toString())
+    return JSON.parse(fs.readFileSync(CREDENTIALS_PATH).toString())
   } catch (e: any) {
     throw Error(`No credentials files, ${e.message}`)
   }
-
-  // Create OAPI Client
-  const {client_secret, client_id, redirect_uris} = credentials.installed;
-
-  const oAuth2Client = new google.auth.OAuth2(
-      client_id, client_secret, redirect_uris[0]);
-
-  // Check for token create/update as needed
-  const tokenExists = exists(TOKEN_PATH)
-  if (!tokenExists) await getAccessToken(oAuth2Client)
-
-  const token: Credentials = JSON.parse(fs.readFileSync(TOKEN_PATH).toString())
-  await oAuth2Client.setCredentials(token)
-
-  return oAuth2Client
 }
+
+const _loadToken = (): Credentials => JSON.parse(fs.readFileSync(TOKEN_PATH).toString())

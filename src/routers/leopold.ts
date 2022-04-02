@@ -11,4 +11,4 @@ leopoldRouter.get('/sendToDoList', (req, res) =>
       .then(() => res.sendStatus(200))
       .catch((e) => res.status(500).send(e.message)));
 
-export = leopoldRouter
+export default leopoldRouter
