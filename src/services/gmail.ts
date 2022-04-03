@@ -17,7 +17,6 @@ const listMessageIds = async () => {
     .then(res => Promise.resolve(res.data))
 }
 
-
 const _getAuthedGmailClient = async (scope: Scopes): Promise<gmail_v1.Gmail> => {
   const auth: OAuth2Client = await getOAuthClient(scope);
 
