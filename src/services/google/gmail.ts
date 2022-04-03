@@ -12,8 +12,8 @@ const listEmailLabels = async () =>
   })
     .then(res => Promise.resolve(res.data))
 
-const listEmails = async () =>
-  await _listMessageIds()
+const listEmails = async  (q: string, maxResults: number) =>
+  await _listMessageIds(q, maxResults)
     .then((response) => Promise.all(response.messages.map((message) =>
       getEmailById(message.id)
     )))
@@ -28,11 +28,11 @@ const getEmailById = async (id: string) =>
 /*
   Helpers
 */
-const _listMessageIds = async () =>
+const _listMessageIds = async (q: string, maxResults: number) =>
   (await _getAuthedGmailClient(Scopes.READ_MAIL)).users.messages.list({
-    // q: "query"
-    // maxAmount: Num
-    userId: 'me'
+    userId: 'me',
+    q,
+    maxResults
   })
     .then(res => Promise.resolve(res.data))
 
@@ -53,6 +53,7 @@ interface Message {
   snippet: string
   to: string
   from: string
+  subject: string
   date: string
   body: string
 }
@@ -64,6 +65,7 @@ const mapGmailMessageToMessage = (message: gmail_v1.Schema$Message): Message => 
     snippet: message.snippet,
     to: message.payload.headers.find(h => h.name === "To").value,
     from: message.payload.headers.find(h => h.name === "From").value,
+    subject: message.payload.headers.find(h => h.name === "Subject").value,
     date: message.payload.headers.find(h => h.name === "Date").value,
     body: parseBody(message)
   })
@@ -77,6 +79,9 @@ const parseBody = (message: gmail_v1.Schema$Message): string => {
       body += base64toUTF8(pt.body.data, false)
     }
   })
+  if (body === "" && message.payload.body.data) {
+    body += base64toUTF8(message.payload.body.data, false)
+  }
   return body
 }
 

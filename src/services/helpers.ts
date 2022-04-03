@@ -30,7 +30,6 @@ export const base64toUTF8 = (str: string, urlsafe: boolean) => {
   return Buffer.from(str, 'base64').toString('utf8');
 };
 
-
 export default {
   base64toUTF8,
   question,
