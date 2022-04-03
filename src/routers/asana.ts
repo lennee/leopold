@@ -8,4 +8,4 @@ asanaRouter.get('/todoList', (req, res) =>
     .then(data => res.status(200).json(data))
     .catch(() => res.sendStatus(500)));
 
-export = asanaRouter
+export default asanaRouter
