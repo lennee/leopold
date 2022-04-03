@@ -5,7 +5,9 @@ dotenv.config();
 
 // const axios = a.default;
 
-const TASKS_URL = `https://app.asana.com/api/1.0/tags/${process.env.CHECKIN_TAG_GID}/tasks`;
+const TASKS_LIST_URL = `https://app.asana.com/api/1.0/tags/${process.env.CHECKIN_TAG_GID}/tasks`;
+const TASKS_BASE_URL = 'https://app.asana.com/api/1.0/tasks/'
+
 
 interface TaskId {
   gid: string,
@@ -34,7 +36,7 @@ export const fetchTodo = async (): Promise<Task[]> => {
 
 
 const _fetchTaskList = async (): Promise<TaskId[]> => {
-  const res = await axios.get(TASKS_URL,
+  const res = await axios.get(TASKS_LIST_URL,
     {
       headers: {
         Authorization: `Bearer ${process.env.ASANA_TOKEN}`,
@@ -44,7 +46,7 @@ const _fetchTaskList = async (): Promise<TaskId[]> => {
 }
 
 const _fetchTaskById = async (taskId: TaskId): Promise<Task> =>
-  axios.get(`https://app.asana.com/api/1.0/tasks/${taskId.gid}`,
+  axios.get(TASKS_BASE_URL + taskId.gid,
   {
     headers: {
       Authorization: `Bearer ${process.env.ASANA_TOKEN}`,
