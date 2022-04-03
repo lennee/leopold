@@ -1,15 +1,9 @@
 import { getOAuthClient, Scopes  } from './google_authorization'
 import { calendar_v3, google } from 'googleapis'
 import { OAuth2Client } from 'google-auth-library'
-import Schema$Event = calendar_v3.Schema$Event
 
-const listEvents = async (calendarId: string): Promise<Schema$Event[]> => {
-
-  const auth: OAuth2Client = await getOAuthClient(Scopes.READ_CALENDAR);
-
-  const calendar = google.calendar({version: 'v3', auth});
-
-  return calendar.events.list({
+const listEvents = async (calendarId: string): Promise<calendar_v3.Schema$Event[]> => {
+  return (await _getAuthedCalendarClient(Scopes.FULL_CALENDAR)).events.list({
     calendarId,
     timeMin: (new Date()).toISOString(),
     maxResults: 10,
@@ -19,16 +13,17 @@ const listEvents = async (calendarId: string): Promise<Schema$Event[]> => {
     .then(data => Promise.resolve(data.data.items))
 }
 
-const createEvent = async (calendarId: string, event: Schema$Event) => {
-
-  const auth: OAuth2Client = await getOAuthClient(Scopes.FULL_CALENDAR);
-
-  const calendar = google.calendar({version: 'v3', auth});
-
-  return calendar.events.insert({
+const createEvent = async (calendarId: string, event: calendar_v3.Schema$Event) => {
+  return (await _getAuthedCalendarClient(Scopes.FULL_CALENDAR)).events.insert({
     calendarId,
     requestBody: event,
   })
+}
+
+const _getAuthedCalendarClient = async (scope: Scopes): Promise<calendar_v3.Calendar> => {
+  const auth: OAuth2Client = await getOAuthClient(Scopes.FULL_CALENDAR);
+
+  return google.calendar({version: 'v3', auth});
 }
 
 export default {
