@@ -22,12 +22,12 @@ export const question = (prompt: string): Promise<string> => new Promise((resolv
   });
 })
 
-export const base64toUTF8 = function base64toUTF8(str: string, urlsafe: boolean) {
+export const base64toUTF8 = (str: string, urlsafe: boolean) => {
   if (urlsafe) {
     str = str.replace(/_/g,"/");
     str = str.replace(/-/g,"+");
   }
-  return new Buffer(str, 'base64').toString('utf8');
+  return Buffer.from(str, 'base64').toString('utf8');
 };
 
 
