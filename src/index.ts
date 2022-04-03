@@ -2,6 +2,7 @@ import express from "express";
 
 import asana from "./routers/asana";
 import leopold from "./routers/leopold";
+import gmail from "./routers/gmail";
 import google_calendar from "./routers/google_calendar";
 import slack from "./routers/slack";
 import dotenv from "dotenv";
@@ -17,6 +18,7 @@ app.use('/api/asana', asana);
 app.use('/api/slack', slack);
 app.use('/api/leopold', leopold);
 app.use('/api/google/calendar', google_calendar);
+app.use('/api/google/gmail', gmail);
 
 const PORT = Number(process.env.PORT) || 3000;
 

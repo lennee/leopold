@@ -21,7 +21,7 @@ const createEvent = async (calendarId: string, event: calendar_v3.Schema$Event) 
 }
 
 const _getAuthedCalendarClient = async (scope: Scopes): Promise<calendar_v3.Calendar> => {
-  const auth: OAuth2Client = await getOAuthClient(Scopes.FULL_CALENDAR);
+  const auth: OAuth2Client = await getOAuthClient(scope);
 
   return google.calendar({version: 'v3', auth});
 }
