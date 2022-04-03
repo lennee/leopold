@@ -8,7 +8,6 @@ dotenv.config();
 const TASKS_LIST_URL = `https://app.asana.com/api/1.0/tags/${process.env.CHECKIN_TAG_GID}/tasks`;
 const TASKS_BASE_URL = 'https://app.asana.com/api/1.0/tasks/'
 
-
 interface TaskId {
   gid: string,
   name: string,
