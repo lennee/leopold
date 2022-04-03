@@ -6,11 +6,11 @@ import { base64toUTF8 } from '../utils'
 /*
   Endpoints
 */
-const listEmailLabels = async () =>
+const listEmailLabels = async (): Promise<gmail_v1.Schema$Label[]> =>
   (await _getAuthedGmailClient(Scopes.READ_MAIL)).users.labels.list({
     userId: 'me'
   })
-    .then(res => Promise.resolve(res.data))
+    .then(res => Promise.resolve(res.data.labels))
 
 const listEmails = async  (q: string, maxResults: number, labelNames: string[]): Promise<Message[]> => {
   let labelIds: string[] = []
@@ -19,7 +19,7 @@ const listEmails = async  (q: string, maxResults: number, labelNames: string[]):
   }
   return await _listMessageIds(q, maxResults, labelIds)
     .then((response) =>
-      Promise.all(response.messages.map((message) => getEmailById(message.id))))
+      Promise.all(response.map((message) => getEmailById(message.id))))
 }
 
 const getEmailById = async (id: string): Promise<Message> =>
@@ -32,14 +32,14 @@ const getEmailById = async (id: string): Promise<Message> =>
 /*
   Helpers
 */
-const _listMessageIds = async (q: string, maxResults: number, labelIds: string[]) => {
+const _listMessageIds = async (q: string, maxResults: number, labelIds: string[]): Promise<gmail_v1.Schema$Message[]> => {
   return (await _getAuthedGmailClient(Scopes.READ_MAIL)).users.messages.list({
     userId: 'me',
     q,
     maxResults,
     labelIds
   })
-    .then(res => Promise.resolve(res.data))
+    .then(res => Promise.resolve(res.data.messages))
 }
 
 const _getAuthedGmailClient = async (scope: Scopes): Promise<gmail_v1.Gmail> => {
@@ -48,10 +48,10 @@ const _getAuthedGmailClient = async (scope: Scopes): Promise<gmail_v1.Gmail> => 
   return google.gmail({version: 'v1', auth});
 }
 
-const _mapLabelNameToId = async (lableNames: string[]) => {
-  const labels = await (await listEmailLabels()).labels
-  return Promise.all(lableNames.map(labelName => labels.find(l => l.name === labelName).id))
-}
+const _mapLabelNameToId = async (lableNames: string[]) =>
+  listEmailLabels()
+    .then((labels) =>
+      Promise.all(lableNames.map(labelName => labels.find(l => l.name === labelName).id)))
 
 /*
   Mappers
@@ -78,10 +78,10 @@ const mapGmailMessageToMessage = (message: gmail_v1.Schema$Message): Message => 
     from: message.payload.headers.find(h => h.name === "From").value,
     subject: message.payload.headers.find(h => h.name === "Subject").value,
     date: message.payload.headers.find(h => h.name === "Date").value,
-    body: parseBody(message)
+    body: parseMessageBody(message)
   })
 
-const parseBody = (message: gmail_v1.Schema$Message): string => {
+const parseMessageBody = (message: gmail_v1.Schema$Message): string => {
   if (!message.payload.parts) return ""
   let body = ""
 

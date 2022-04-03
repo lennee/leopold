@@ -51,7 +51,7 @@ export const getOAuthClient = async (scopeName: Scopes): Promise<OAuth2Client> =
   return oAuth2Client
 }
 
-const _createToken = async (oAuth2Client: OAuth2Client, scopeName: Scopes) => new Promise(async (resolve, reject) => {
+const _createToken = async (oAuth2Client: OAuth2Client, scopeName: Scopes): Promise<Credentials> => new Promise(async (resolve, reject) => {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES_MAP[scopeName]

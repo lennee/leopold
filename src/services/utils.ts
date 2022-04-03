@@ -22,7 +22,7 @@ export const question = (prompt: string): Promise<string> => new Promise((resolv
   });
 })
 
-export const base64toUTF8 = (str: string, urlsafe: boolean) => {
+export const base64toUTF8 = (str: string, urlsafe: boolean): string => {
   if (urlsafe) {
     str = str.replace(/_/g,"/");
     str = str.replace(/-/g,"+");
