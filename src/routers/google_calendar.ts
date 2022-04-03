@@ -1,4 +1,4 @@
-import google_calendar from '../services/google_calendar'
+import google_calendar from '../services/google/google_calendar'
 import { Router } from 'express'
 
 const googleCalendarRouter = Router()

@@ -3,7 +3,7 @@ import readline from 'readline'
 import axios from 'axios'
 import { google } from 'googleapis'
 import { OAuth2Client, Credentials } from 'google-auth-library'
-import { exists, question } from './helpers'
+import { exists, question } from '../helpers'
 
 export const CREDENTIALS_PATH = './src/credentials/credentials.json'
 export const tokenPath = (scopeName: Scopes) => `./src/credentials/token_${scopeName}.json`
