@@ -5,6 +5,8 @@ dotenv.config();
 
 // const axios = a.default;
 
+const TASKS_URL = `https://app.asana.com/api/1.0/tags/${process.env.CHECKIN_TAG_GID}/tasks`;
+
 interface TaskId {
   gid: string,
   name: string,
@@ -24,20 +26,28 @@ export interface Task {
 
 export const fetchTodo = async (): Promise<Task[]> => {
   // Get task id list
-  const tasks = await axios.get(`https://app.asana.com/api/1.0/tags/${process.env.CHECKIN_TAG_GID}/tasks`,
+  const tasks = await _fetchTaskList()
+
+  // Fetch data for each Tag
+  return Promise.all(tasks.map((taskId: TaskId) => _fetchTaskById(taskId)))
+};
+
+
+const _fetchTaskList = async (): Promise<TaskId[]> => {
+  const res = await axios.get(TASKS_URL,
     {
       headers: {
         Authorization: `Bearer ${process.env.ASANA_TOKEN}`,
       },
-    });
-  // Fetch data for each Tag
-  return Promise.all(tasks.data.data.map((task: TaskId) => (
-    axios.get(`https://app.asana.com/api/1.0/tasks/${task.gid}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.ASANA_TOKEN}`,
-        },
-      })
-      .then((res) => res.data.data)
-  )));
-};
+    })
+    return res.data.data
+}
+
+const _fetchTaskById = async (taskId: TaskId): Promise<Task> =>
+  axios.get(`https://app.asana.com/api/1.0/tasks/${taskId.gid}`,
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.ASANA_TOKEN}`,
+    },
+  })
+  .then((res) => res.data.data)
