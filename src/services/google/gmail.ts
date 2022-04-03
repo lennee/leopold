@@ -1,7 +1,7 @@
 import { getOAuthClient, Scopes  } from './google_authorization'
 import { gmail_v1, google } from 'googleapis'
 import { OAuth2Client } from 'google-auth-library'
-import { base64toUTF8 } from '../helpers'
+import { base64toUTF8 } from '../utils'
 
 /*
   Endpoints
@@ -12,34 +12,45 @@ const listEmailLabels = async () =>
   })
     .then(res => Promise.resolve(res.data))
 
-const listEmails = async  (q: string, maxResults: number) =>
-  await _listMessageIds(q, maxResults)
-    .then((response) => Promise.all(response.messages.map((message) =>
-      getEmailById(message.id)
-    )))
+const listEmails = async  (q: string, maxResults: number, labelNames: string[]): Promise<Message[]> => {
+  let labelIds: string[] = []
+  if (labelNames.length > 0) {
+    labelIds = await _mapLabelNameToId(labelNames)
+  }
+  return await _listMessageIds(q, maxResults, labelIds)
+    .then((response) =>
+      Promise.all(response.messages.map((message) => getEmailById(message.id))))
+}
 
-const getEmailById = async (id: string) =>
+const getEmailById = async (id: string): Promise<Message> =>
   (await _getAuthedGmailClient(Scopes.READ_MAIL)).users.messages.get({
     userId: 'me',
     id
   })
-    .then(res => Promise.resolve(mapGmailMessageToMessage(res.data)))
+    .then(async res => Promise.resolve(mapGmailMessageToMessage(res.data)))
 
 /*
   Helpers
 */
-const _listMessageIds = async (q: string, maxResults: number) =>
-  (await _getAuthedGmailClient(Scopes.READ_MAIL)).users.messages.list({
+const _listMessageIds = async (q: string, maxResults: number, labelIds: string[]) => {
+  return (await _getAuthedGmailClient(Scopes.READ_MAIL)).users.messages.list({
     userId: 'me',
     q,
-    maxResults
+    maxResults,
+    labelIds
   })
     .then(res => Promise.resolve(res.data))
+}
 
 const _getAuthedGmailClient = async (scope: Scopes): Promise<gmail_v1.Gmail> => {
   const auth: OAuth2Client = await getOAuthClient(scope);
 
   return google.gmail({version: 'v1', auth});
+}
+
+const _mapLabelNameToId = async (lableNames: string[]) => {
+  const labels = await (await listEmailLabels()).labels
+  return Promise.all(lableNames.map(labelName => labels.find(l => l.name === labelName).id))
 }
 
 /*
