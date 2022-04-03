@@ -1,6 +1,6 @@
 import { Task } from "./asana";
 
-export const formatToDoList = (todo: Task[]) => {
+export const formatToDoList = (todo: Task[]): string => {
   let message = '*Here is a quick "_ToDo List_" to talk about today:*\n\n';
 
   todo.forEach((task: Task) => {
